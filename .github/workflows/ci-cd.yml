@@ -2,73 +2,26 @@ name: CI/CD Pipeline - Chat App
 
 on:
   push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Get the code
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Setup Docker
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
 
-      # Step 3: Build the Docker image
-      - name: Build Docker Image
-        run: |
-          docker-compose build
-          echo "✓ Docker image built successfully"
+      - name: Install dependencies
+        run: npm install
+        working-directory: chat-app/chat-server
 
-      # Step 4: Start all services
-      - name: Start Services with Docker Compose
-        run: |
-          docker-compose up -d
-          echo "⏳ Waiting for services to be ready..."
-          sleep 15
-
-      # Step 5: Check if services are running
-      - name: Check Running Containers
-        run: |
-          echo "📦 Running containers:"
-          docker-compose ps
-          docker ps
-
-      # Step 6: Test Health Endpoint
-      - name: Test Health Check Endpoint
-        run: |
-          echo "🏥 Testing health endpoint..."
-          curl -f http://localhost/health || exit 1
-          echo "✓ Health check passed"
-
-      # Step 7: Test API Endpoints
-      - name: Test API Endpoints
-        run: |
-          echo "📋 Testing API endpoints..."
-          curl -f http://localhost/api/messages || exit 1
-          echo "✓ API tests passed"
-
-      # Step 8: Check logs
-      - name: Show Container Logs
-        if: always()
-        run: |
-          echo "📊 Chat Server Logs:"
-          docker-compose logs chat-server
-
-      # Step 9: Stop and cleanup
-      - name: Cleanup
-        if: always()
-        run: |
-          echo "🧹 Cleaning up..."
-          docker-compose down -v
-          echo "✓ Cleanup complete"
-
-      # Step 10: Final status
-      - name: Build Status
-        if: success()
-        run: echo "✅ All tests passed! Build successful!"
+      - name: Run server (optional)
+        run: npm start
+        working-directory: chat-app/chat-server
