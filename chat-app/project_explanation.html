@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scalable Chat Architecture - Project Explanation</title>
+    <meta name="description" content="In-depth explanation of the Dockerized, Scalable Real-Time Chat App architecture.">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #09090b;
+            --card-bg: #18181b;
+            --text-main: #f4f4f5;
+            --text-muted: #a1a1aa;
+            
+            --brand-mongo: #10b981; /* Emerald */
+            --brand-redis: #ef4444; /* Red */
+            --brand-node: #3b82f6;  /* Blue */
+            --brand-nginx: #8b5cf6; /* Violet */
+            --brand-docker: #0ea5e9; /* Sky */
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        .header {
+            text-align: center;
+            padding: 80px 20px 40px;
+            background: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.15) 0%, transparent 60%);
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            margin: 0 0 15px 0;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff, #a1a1aa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px 80px;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 10px;
+            margin: 60px 0 30px;
+            display: inline-block;
+        }
+
+        /* Grid for Components */
+        .components-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            z-index: 10;
+        }
+
+        /* Top Bar Colors */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 4px;
+        }
+        .card.nginx::before { background: var(--brand-nginx); }
+        .card.node::before { background: var(--brand-node); }
+        .card.redis::before { background: var(--brand-redis); }
+        .card.mongo::before { background: var(--brand-mongo); }
+
+        .card:hover.nginx { box-shadow: 0 10px 40px -10px rgba(139, 92, 246, 0.3); }
+        .card:hover.node { box-shadow: 0 10px 40px -10px rgba(59, 130, 246, 0.3); }
+        .card:hover.redis { box-shadow: 0 10px 40px -10px rgba(239, 68, 68, 0.3); }
+        .card:hover.mongo { box-shadow: 0 10px 40px -10px rgba(16, 185, 129, 0.3); }
+
+        .card h3 {
+            margin: 0 0 15px 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .card.nginx h3 { color: #c4b5fd; }
+        .card.node h3 { color: #93c5fd; }
+        .card.redis h3 { color: #fca5a5; }
+        .card.mongo h3 { color: #6ee7b7; }
+
+        .card p {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+            margin: 0;
+        }
+
+        /* Workflow path */
+        .workflow {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            margin-top: 20px;
+        }
+
+        .step-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .step-list li {
+            position: relative;
+            padding-left: 40px;
+            margin-bottom: 25px;
+        }
+
+        .step-list li:last-child {
+            margin-bottom: 0;
+        }
+
+        .step-list li::before {
+            content: '';
+            position: absolute;
+            left: 11px;
+            top: 5px;
+            width: 14px;
+            height: 14px;
+            background: var(--brand-docker);
+            border-radius: 50%;
+            z-index: 2;
+            box-shadow: 0 0 10px var(--brand-docker);
+        }
+
+        .step-list li::after {
+            content: '';
+            position: absolute;
+            left: 17px;
+            top: 20px;
+            width: 2px;
+            height: calc(100% + 5px);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .step-list li:last-child::after {
+            display: none;
+        }
+
+        .step-title {
+            font-weight: 600;
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+
+        /* Diagram Box */
+        .diagram-box {
+            background: rgba(0,0,0,0.3);
+            border: 1px dashed rgba(255,255,255,0.2);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            margin: 40px 0;
+            font-family: monospace;
+            color: var(--text-muted);
+            white-space: pre;
+            overflow-x: auto;
+            line-height: 1.2;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 2.5rem; }
+            .section-title { font-size: 1.6rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Project Explanation</h1>
+        <p>A deep dive into the underlying architecture of a highly available, horizontally scaled real-time chat application.</p>
+    </div>
+
+    <div class="container">
+        
+        <h2 class="section-title">High-Level Architecture</h2>
+        <div class="diagram-box">
+[ User 1 ]       [ User 2 ]       [ User 3 ]
+    \                |                /
+     \               |               /
+      \              |              /
+     +--------------------------------+
+     |       NGINX (Load Balancer)    | 
+     +--------------------------------+
+             /       |        \
+            /        |         \
+   [ Node Server 1]  [ Node Server 2]  [ Node Server 3] 
+            \        |         /
+             \       |        /
+              \      |       /
+     +--------------------------------+
+     |          REDIS (Pub/Sub)       |
+     +--------------------------------+
+                     |
+                     V
+     +--------------------------------+
+     |   MONGODB (Data Persistence)   |
+     +--------------------------------+
+        </div>
+
+        <h2 class="section-title">Core Components</h2>
+        <div class="components-grid">
+            
+            <div class="card nginx">
+                <h3>1. Nginx (Load Balancer)</h3>
+                <p>Acts as the single entry point. Instead of users directly hitting a specific Node.js server, Nginx intercepts the incoming traffic on port 80 and uniformly distributes it across all spinning instances of the chat servers. It ensures no single server gets overwhelmed.</p>
+            </div>
+
+            <div class="card node">
+                <h3>2. Node.js & Socket.IO</h3>
+                <p>The core application logic. Express serves the HTML/JS front-end, while Socket.IO handles the persistent WebSocket real-time connections. Because the servers are stateless, we can safely duplicate this container (horizontal scaling) to expand computational capacity on demand.</p>
+            </div>
+
+            <div class="card redis">
+                <h3>3. Redis (Message Broker)</h3>
+                <p>Crucial for synchronization. Without Redis, if User A is on Server 1 and User B is on Server 2, they cannot communicate! Redis solves this via the Pub/Sub pattern. When Server 1 receives a message, it <em>publishes</em> it to Redis. Redis then pushes it natively to all other subscribed servers.</p>
+            </div>
+
+            <div class="card mongo">
+                <h3>4. MongoDB (Persistence)</h3>
+                <p>While Redis handles the ultra-fast real-time transmission, MongoDB stores the messages permanently. When any new user connects, the Node.js server retrieves the previous message history from MongoDB, so the user has immediate context of the ongoing conversation.</p>
+            </div>
+
+        </div>
+
+        <h2 class="section-title">Message Lifecycle: Step-by-Step</h2>
+        <div class="workflow">
+            <ul class="step-list">
+                <li>
+                    <div class="step-title">Connection Initialized</div>
+                    <p class="step-desc">A user opens the browser. Nginx decides to route them to Chat-Server-2. Server-2 immediately pulls message history from MongoDB and sends it to the user.</p>
+                </li>
+                <li>
+                    <div class="step-title">Message Sent</div>
+                    <p class="step-desc">The user types "Hello World" and hits send. The data is beamed over WebSockets specifically to Chat-Server-2.</p>
+                </li>
+                <li>
+                    <div class="step-title">Database Storage</div>
+                    <p class="step-desc">Chat-Server-2 writes the new document {"user": "Alice", "msg": "Hello World"} into MongoDB for long-term storage.</p>
+                </li>
+                <li>
+                    <div class="step-title">Redis Publishing</div>
+                    <p class="step-desc">Simultaneously, Chat-Server-2 tells Redis: <em>"Hey, distribute this new message event."</em></p>
+                </li>
+                <li>
+                    <div class="step-title">Broadcasting via Redis</div>
+                    <p class="step-desc">Redis broadcasts the payload to Server-1 and Server-3. Now, ALL instances are aware of the new message simultaneously.</p>
+                </li>
+                <li>
+                    <div class="step-title">Client Delivery</div>
+                    <p class="step-desc">Every server pushes the message down through their active WebSocket connections. Users attached to entirely different servers see the message instantly.</p>
+                </li>
+            </ul>
+        </div>
+
+        <h2 class="section-title">Why Docker & Docker Compose?</h2>
+        <div class="workflow">
+            <p style="color: var(--text-muted); margin-top: 0; font-size: 1.1rem; line-height: 1.7;">
+                In the past, running an infrastructure locally with Node, Redis, Mongo, and Nginx meant installing all these distinct technologies natively on your OS. It was prone to version mismatch and "it works on my machine" bugs. 
+                <br><br>
+                <strong>Docker</strong> containerizes each service in its isolated, predictable Linux environment. <strong>Docker Compose</strong> stitches them together on an internal Virtual Network, allowing DNS resolution naturally by container names (e.g. <code>redis:6379</code>). Finally, Docker Compose trivializes <strong>Horizontal Scaling</strong>; a single <code>--scale chat-server=N</code> flag clones our core logic seamlessly.
+            </p>
+        </div>
+
+    </div>
+
+</body>
+</html>

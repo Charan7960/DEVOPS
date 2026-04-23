@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App - Setup Guide</title>
+    <meta name="description" content="A comprehensive setup guide to run the Scalable Chat Application locally using Docker Compose.">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --surface-color: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #8b5cf6;
+            --glow: rgba(59, 130, 246, 0.5);
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+            margin: 50px 20px;
+            background: var(--surface-color);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+        }
+        /* Top glowing accent */
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            z-index: 10;
+        }
+        .header {
+            padding: 50px 40px;
+            text-align: center;
+            background: radial-gradient(circle at top, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header p {
+            margin-top: 15px;
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+        }
+        .content {
+            padding: 50px 40px;
+        }
+        .step {
+            display: flex;
+            margin-bottom: 40px;
+            opacity: 0;
+            animation: fadeInRight 0.6s ease-out forwards;
+        }
+        .step-number {
+            flex-shrink: 0;
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin-right: 25px;
+            box-shadow: 0 10px 15px -3px var(--glow);
+            transition: transform 0.3s ease;
+        }
+        .step:hover .step-number {
+            transform: scale(1.1) rotate(5deg);
+        }
+        .step-content {
+            flex-grow: 1;
+        }
+        .step-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0 0 12px 0;
+            color: #fff;
+        }
+        .step-desc {
+            color: var(--text-secondary);
+            line-height: 1.7;
+            font-size: 1.05rem;
+        }
+        code {
+            background: rgba(0,0,0,0.4);
+            color: #34d399;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+        }
+        .code-block {
+            background: #09090b;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid var(--accent-secondary);
+            overflow-x: auto;
+            margin-top: 15px;
+            font-family: 'Courier New', Courier, monospace;
+            color: #e2e8f0;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+            transition: border-color 0.3s ease;
+        }
+        .code-block:hover {
+            border-color: var(--accent-primary);
+        }
+        
+        .tip {
+            margin-top: 20px;
+            padding: 15px 20px;
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 3px solid #10b981;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            color: #d1fae5;
+        }
+
+        /* Animations */
+        @keyframes fadeInRight {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .step:nth-child(1) { animation-delay: 0.1s; }
+        .step:nth-child(2) { animation-delay: 0.2s; }
+        .step:nth-child(3) { animation-delay: 0.3s; }
+        .step:nth-child(4) { animation-delay: 0.4s; }
+        .step:nth-child(5) { animation-delay: 0.5s; }
+
+        @media (max-width: 600px) {
+            .header h1 { font-size: 2.2rem; }
+            .content { padding: 30px 20px; }
+            .step { flex-direction: column; }
+            .step-number { margin-bottom: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>Setup & Execution Guide</h1>
+            <p>Launch the horizontally scaled Chat Application locally.</p>
+        </div>
+
+        <div class="content">
+            <!-- Step 1 -->
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h2 class="step-title">Prerequisites</h2>
+                    <div class="step-desc">
+                        Ensure you have <strong>Docker</strong> and <strong>Docker Compose</strong> installed on your machine.
+                        If you are on Windows or Mac, downloading <strong>Docker Desktop</strong> is the easiest way to fulfill this. Ensure the Docker engine is running before proceeding.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h2 class="step-title">Open the Project Directory</h2>
+                    <div class="step-desc">
+                        Open your terminal (PowerShell, Command Prompt, or Git Bash) and navigate to the project directory where the <code>docker-compose.yml</code> file is located.
+                        <div class="code-block">
+                            cd desktop\devops\chat-app
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h2 class="step-title">Run the Multi-Container Architecture</h2>
+                    <div class="step-desc">
+                        To build the images and spin up all services in the background, run the following command. The <code>--scale</code> flag dynamically spins up multiple chat server instances. By default, let's start with 3 servers!
+                        <div class="code-block">
+                            docker-compose up -d --scale chat-server=3
+                        </div>
+                        <div class="tip">
+                            <strong>Note:</strong> The initial run will take a few minutes as it downloads official images for Nginx, Redis, MongoDB, and builds your custom Node.js image.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <h2 class="step-title">Access the Application</h2>
+                    <div class="step-desc">
+                        Once all containers state "Started", open your web browser and navigate to:
+                        <div class="code-block">
+                            http://localhost
+                        </div>
+                        Open multiple tabs or use incognito mode to simulate different users. Notice the Server ID indicator in the top right to see Nginx's load balancer actively distributing your requests across the different replicas!
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 5 -->
+            <div class="step">
+                <div class="step-number">5</div>
+                <div class="step-content">
+                    <h2 class="step-title">Stopping the Application</h2>
+                    <div class="step-desc">
+                        When you are finished testing, gracefully stop and remove the containers, networks, and images (except volumes) by running:
+                        <div class="code-block">
+                            docker-compose down
+                        </div>
+                        If you want to clear your MongoDB and Redis database data as well, append <code>-v</code> to the command.
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>
